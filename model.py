@@ -29,7 +29,15 @@ logging.basicConfig(format=FORMAT, level=logging.DEBUG)
 
 
 class WordContextModel(Model):
-    """ d"""
+    """ WordContextModel implements a word2vec-like model trained with
+    negative sampling. The word indices (of both the target word and
+    its context) are passed to two distinct networks and the goal is to
+    learn to discriminate between `true' and `false' contexts
+
+    Parameters:
+    corpus_path (str): the path to a text file
+    embedding_size (int): the size of the neural embeddings
+    """
     def __init__(self, corpus_path, embedding_size, *args, **kwargs):
         self.corpus_path = corpus_path
         self.embedding_size = embedding_size
@@ -42,7 +50,7 @@ class WordContextModel(Model):
     @staticmethod
     def _prepare_model(vocab_size, vector_dim, loss_function,
                        optimizer):
-        """ d"""
+        """ Procedure to prepare the Keras model """
         logging.info('Building word model...')
         word = Sequential()
         word.add(Embedding(vocab_size, vector_dim, input_length=1))
@@ -62,7 +70,7 @@ class WordContextModel(Model):
         return model
 
     def prepare_model(self):
-        """ d"""
+        """ Procedure to prepare the Keras model """
         self.model = self._prepare_model(self.vocab_size,
                                          self.embedding_size,
                                          self.loss_function,
@@ -70,14 +78,14 @@ class WordContextModel(Model):
 
     @property
     def vocab_size(self):
-        """ d"""
+        """ Return the size of the vocabulary """
         try:
             return self._vocab_size
         except AttributeError:
             logging.error('Please tokenize the corpus first')
 
     def tokenize_corpus(self):
-        """ d"""
+        """ Tokenize the corpus using Keras helper classes"""
         self.corpus = CorpusReader(self.corpus_path)
         logging.info('Tokenizing the corpus')
         self.tokenizer = text.Tokenizer()
@@ -85,7 +93,12 @@ class WordContextModel(Model):
         self._vocab_size = len(self.tokenizer.word_counts) + 1
 
     def train_corpus(self, negative_samples=20, window_size=4):
-        """ d"""
+        """ Train the model on the given corpus
+
+        Parameters:
+        negative_samples (int): the number of `false contexts' for each word
+        window_size (int): the size of each context
+        """
         logging.info('Initialising sampling table')
         sampling_table = sequence.make_sampling_table(self.vocab_size)
         ans = []
