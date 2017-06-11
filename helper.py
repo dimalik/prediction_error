@@ -35,7 +35,7 @@ class CorpusReader(object):
         return self._path
 
 
-class Model(object):
+class NNModel(object):
     """ Abstract class for Keras models.
 
     Parameters:
