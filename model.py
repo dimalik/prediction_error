@@ -17,18 +17,19 @@ import cPickle as pkl
 
 import numpy as np
 
-from keras.models import Sequential
-from keras.layers.core import Merge, Reshape, Dense
+from keras.models import Sequential, Model
+from keras.layers.core import Reshape, Dense
+from keras.layers.merge import Dot
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence, text
 
-from helper import CorpusReader, Model
+from helper import CorpusReader, NNModel
 
 FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
 logging.basicConfig(format=FORMAT, level=logging.DEBUG)
 
 
-class WordContextModel(Model):
+class WordContextModel(NNModel):
     """ WordContextModel implements a word2vec-like model trained with
     negative sampling. The word indices (of both the target word and
     its context) are passed to two distinct networks and the goal is to
@@ -62,10 +63,11 @@ class WordContextModel(Model):
         context.add(Reshape((vector_dim, 1)))
 
         logging.info('Building composite graph')
-        model = Sequential()
-        model.add(Merge([word, context], mode='dot', dot_axes=1))
-        model.add(Reshape((1, )))
-        model.add(Dense(1, activation='sigmoid'))
+        dot_merged = Dot(axes=1)([word.output, context.output])
+        composite = Reshape((1, ))(dot_merged)
+        composite = Dense(1, activation='sigmoid')(composite)
+        
+        model = Model([word.input, context.input], composite)
         model.compile(loss=loss_function, optimizer=optimizer)
         return model
 
